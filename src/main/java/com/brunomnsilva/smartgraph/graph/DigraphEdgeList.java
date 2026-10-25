@@ -277,9 +277,11 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
     private class MyVertex implements Vertex<V> {
 
         V element;
+        Digraph<V,?> parent;
 
         public MyVertex(V element) {
             this.element = element;
+            this.parent = DigraphEdgeList.this;
         }
 
         @Override
@@ -298,11 +300,13 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         E element;
         Vertex<V> vertexOutbound;
         Vertex<V> vertexInbound;
+        Digraph<V,E> parent;
 
         public MyEdge(E element, Vertex<V> vertexOutbound, Vertex<V> vertexInbound) {
             this.element = element;
             this.vertexOutbound = vertexOutbound;
             this.vertexInbound = vertexInbound;
+            this.parent = DigraphEdgeList.this;
         }
 
         @Override
@@ -356,7 +360,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
             throw new InvalidVertexException("Not a vertex.");
         }
 
-        if (!vertices.containsKey(vertex.element)) {
+        if (vertex.parent != DigraphEdgeList.this) {
             throw new InvalidVertexException("Vertex does not belong to this graph.");
         }
 
@@ -373,7 +377,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
             throw new InvalidVertexException("Not an adge.");
         }
 
-        if (!edges.containsKey(edge.element)) {
+        if (edge.parent != DigraphEdgeList.this) {
             throw new InvalidEdgeException("Edge does not belong to this graph.");
         }
 

@@ -271,9 +271,11 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     class MyVertex implements Vertex<V> {
 
         V element;
+        Graph<V,?> parent;
 
         public MyVertex(V element) {
             this.element = element;
+            this.parent = GraphEdgeList.this;
         }
 
         @Override
@@ -292,11 +294,13 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         E element;
         Vertex<V> vertexOutbound;
         Vertex<V> vertexInbound;
+        Graph<V,E> parent;
 
         public MyEdge(E element, Vertex<V> vertexOutbound, Vertex<V> vertexInbound) {
             this.element = element;
             this.vertexOutbound = vertexOutbound;
             this.vertexInbound = vertexInbound;
+            this.parent = GraphEdgeList.this;
         }
 
         @Override
@@ -341,7 +345,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
             throw new InvalidVertexException("Not a vertex.");
         }
 
-        if (!vertices.containsKey(vertex.element)) {
+        if (vertex.parent != GraphEdgeList.this) {
             throw new InvalidVertexException("Vertex does not belong to this graph.");
         }
 
@@ -358,7 +362,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
             throw new InvalidVertexException("Not an adge.");
         }
 
-        if (!edges.containsKey(edge.element)) {
+        if (edge.parent != GraphEdgeList.this) {
             throw new InvalidEdgeException("Edge does not belong to this graph.");
         }
 
