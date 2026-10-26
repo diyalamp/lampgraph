@@ -30,6 +30,10 @@ import java.util.*;
  * where each edge contains the references for the vertices it connects.
  * <br>
  * Does not allow duplicates of stored elements through <b>equals</b> criteria.
+ * <p>
+ * Individual operations are synchronized. Sequences of operations are not atomic;
+ * callers that need to group mutations can synchronize on the graph instance.
+ * Visualization updates read the model from the JavaFX Application Thread.
  *
  * @param <V> Type of element stored at a vertex
  * @param <E> Type of element stored at an edge
@@ -52,27 +56,27 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     }
 
     @Override
-    public int numVertices() {
+    public synchronized int numVertices() {
         return vertices.size();
     }
 
     @Override
-    public int numEdges() {
+    public synchronized int numEdges() {
         return edges.size();
     }
 
     @Override
-    public Collection<Vertex<V>> vertices() {
+    public synchronized Collection<Vertex<V>> vertices() {
         return new ArrayList<>(vertices.values());
     }
 
     @Override
-    public Collection<Edge<E, V>> edges() {
+    public synchronized Collection<Edge<E, V>> edges() {
         return new ArrayList<>(edges.values());
     }
 
     @Override
-    public Collection<Edge<E, V>> incidentEdges(Vertex<V> v) throws InvalidVertexException {
+    public synchronized Collection<Edge<E, V>> incidentEdges(Vertex<V> v) throws InvalidVertexException {
 
         checkVertex(v);
 
@@ -90,7 +94,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     }
 
     @Override
-    public Vertex<V> opposite(Vertex<V> v, Edge<E, V> e) throws InvalidVertexException, InvalidEdgeException {
+    public synchronized Vertex<V> opposite(Vertex<V> v, Edge<E, V> e) throws InvalidVertexException, InvalidEdgeException {
         checkVertex(v);
         MyEdge edge = checkEdge(e);
 
@@ -205,7 +209,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     }
 
     @Override
-    public V replace(Vertex<V> v, V newElement) throws InvalidVertexException {
+    public synchronized V replace(Vertex<V> v, V newElement) throws InvalidVertexException {
         if (existsVertexWith(newElement)) {
             throw new InvalidVertexException("There's already a vertex with this element.");
         }
@@ -222,7 +226,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     }
 
     @Override
-    public E replace(Edge<E, V> e, E newElement) throws InvalidEdgeException {
+    public synchronized E replace(Edge<E, V> e, E newElement) throws InvalidEdgeException {
         if (existsEdgeWith(newElement)) {
             throw new InvalidEdgeException("There's already an edge with this element.");
         }
@@ -252,16 +256,24 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     @Override
     public String toString() {
+        Collection<Vertex<V>> vertexSnapshot;
+        Collection<Edge<E, V>> edgeSnapshot;
+        synchronized (this) {
+            vertexSnapshot = new ArrayList<>(vertices.values());
+            edgeSnapshot = new ArrayList<>(edges.values());
+        }
+
         StringBuilder sb = new StringBuilder(
-                String.format("Graph with %d vertices and %d edges:\n", numVertices(), numEdges())
+                String.format("Graph with %d vertices and %d edges:\n",
+                        vertexSnapshot.size(), edgeSnapshot.size())
         );
 
         sb.append("--- Vertices: \n");
-        for (Vertex<V> v : vertices.values()) {
+        for (Vertex<V> v : vertexSnapshot) {
             sb.append("\t").append(v.toString()).append("\n");
         }
         sb.append("\n--- Edges: \n");
-        for (Edge<E, V> e : edges.values()) {
+        for (Edge<E, V> e : edgeSnapshot) {
             sb.append("\t").append(e.toString()).append("\n");
         }
         return sb.toString();
@@ -269,8 +281,8 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     class MyVertex implements Vertex<V> {
 
-        V element;
-        Graph<V,?> parent;
+        volatile V element;
+        final Graph<V,?> parent;
 
         public MyVertex(V element) {
             this.element = element;
@@ -290,10 +302,10 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     class MyEdge implements Edge<E, V> {
 
-        E element;
-        Vertex<V> vertexOutbound;
-        Vertex<V> vertexInbound;
-        Graph<V,E> parent;
+        volatile E element;
+        final Vertex<V> vertexOutbound;
+        final Vertex<V> vertexInbound;
+        final Graph<V,E> parent;
 
         public MyEdge(E element, Vertex<V> vertexOutbound, Vertex<V> vertexInbound) {
             this.element = element;
