@@ -200,6 +200,17 @@ class GraphImplTest {
         }
 
         @Test
+        @DisplayName("removeVertex removes incident self-loops")
+        void removeVertexRemovesSelfLoops() {
+            graph.insertEdge(a, a, 10);
+            graph.insertEdge(a, b, 11);
+
+            assertEquals("A", graph.removeVertex(a));
+
+            assertEquals(0, graph.numEdges());
+        }
+
+        @Test
         @DisplayName("parallel edges between the same vertices are allowed")
         void parallelEdgesAreAllowed() {
             Edge<Integer, String> first = graph.insertEdge(a, b, 10);
@@ -292,6 +303,32 @@ class GraphImplTest {
         }
 
         @Test
+        @DisplayName("replace(Vertex) re-indexes the new element")
+        void replaceVertexReindexesElement() {
+            Vertex<String> d = graph.insertVertex("D");
+
+            assertEquals("D", graph.replace(d, "E"));
+
+            assertThrows(InvalidVertexException.class, () -> graph.insertVertex("E"));
+            assertEquals(4, graph.numVertices());
+
+            Vertex<String> reinserted = graph.insertVertex("D");
+            assertEquals("D", reinserted.element());
+            assertEquals(5, graph.numVertices());
+        }
+
+        @Test
+        @DisplayName("a replaced vertex can be used by element-based edge insertion")
+        void replacedVertexCanBeUsedByElementBasedInsertEdge() {
+            Vertex<String> d = graph.insertVertex("D");
+            graph.replace(d, "E");
+
+            Edge<Integer, String> edge = graph.insertEdge("E", "A", 10);
+
+            assertArrayEquals(new Vertex[]{d, a}, edge.vertices());
+        }
+
+        @Test
         @DisplayName("replace(Edge) returns the previous element and updates the edge")
         void replaceEdgeElement() {
             Edge<Integer, String> edge = graph.insertEdge(a, b, 10);
@@ -312,6 +349,21 @@ class GraphImplTest {
             assertThrows(InvalidEdgeException.class, () -> graph.replace(first, 11));
 
             assertEquals(10, first.element());
+            assertEquals(2, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("replace(Edge) re-indexes the new element")
+        void replaceEdgeReindexesElement() {
+            Edge<Integer, String> edge = graph.insertEdge(a, b, 10);
+
+            assertEquals(10, graph.replace(edge, 20));
+
+            assertThrows(InvalidEdgeException.class, () -> graph.insertEdge(a, c, 20));
+            assertEquals(1, graph.numEdges());
+
+            Edge<Integer, String> reinserted = graph.insertEdge(a, c, 10);
+            assertEquals(10, reinserted.element());
             assertEquals(2, graph.numEdges());
         }
 
@@ -507,6 +559,17 @@ class GraphImplTest {
         }
 
         @Test
+        @DisplayName("removeVertex removes incident self-loops")
+        void removeVertexRemovesSelfLoops() {
+            graph.insertEdge(a, a, 10);
+            graph.insertEdge(a, b, 11);
+
+            assertEquals("A", graph.removeVertex(a));
+
+            assertEquals(0, graph.numEdges());
+        }
+
+        @Test
         @DisplayName("removeEdge removes only the given edge")
         void removeEdgeRemovesEdge() {
             Edge<Integer, String> ab = graph.insertEdge(a, b, 10);
@@ -589,6 +652,32 @@ class GraphImplTest {
         }
 
         @Test
+        @DisplayName("replace(Vertex) re-indexes the new element")
+        void replaceVertexReindexesElement() {
+            Vertex<String> d = graph.insertVertex("D");
+
+            assertEquals("D", graph.replace(d, "E"));
+
+            assertThrows(InvalidVertexException.class, () -> graph.insertVertex("E"));
+            assertEquals(4, graph.numVertices());
+
+            Vertex<String> reinserted = graph.insertVertex("D");
+            assertEquals("D", reinserted.element());
+            assertEquals(5, graph.numVertices());
+        }
+
+        @Test
+        @DisplayName("a replaced vertex can be used by element-based edge insertion")
+        void replacedVertexCanBeUsedByElementBasedInsertEdge() {
+            Vertex<String> d = graph.insertVertex("D");
+            graph.replace(d, "E");
+
+            Edge<Integer, String> edge = graph.insertEdge("E", "A", 10);
+
+            assertArrayEquals(new Vertex[]{d, a}, edge.vertices());
+        }
+
+        @Test
         @DisplayName("replace(Edge) returns the previous element and updates the edge")
         void replaceEdgeElement() {
             Edge<Integer, String> edge = graph.insertEdge(a, b, 10);
@@ -609,6 +698,21 @@ class GraphImplTest {
             assertThrows(InvalidEdgeException.class, () -> graph.replace(first, 11));
 
             assertEquals(10, first.element());
+            assertEquals(2, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("replace(Edge) re-indexes the new element")
+        void replaceEdgeReindexesElement() {
+            Edge<Integer, String> edge = graph.insertEdge(a, b, 10);
+
+            assertEquals(10, graph.replace(edge, 20));
+
+            assertThrows(InvalidEdgeException.class, () -> graph.insertEdge(a, c, 20));
+            assertEquals(1, graph.numEdges());
+
+            Edge<Integer, String> reinserted = graph.insertEdge(a, c, 10);
+            assertEquals(10, reinserted.element());
             assertEquals(2, graph.numEdges());
         }
 

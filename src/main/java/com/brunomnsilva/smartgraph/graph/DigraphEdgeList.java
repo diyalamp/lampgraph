@@ -117,15 +117,15 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
             throw new InvalidEdgeException("There's already an edge with this element.");
         }
 
-        if (!existsVertexWith(outboundElement)) {
+        MyVertex outVertex = vertexOf(outboundElement);
+        if (outVertex == null) {
             throw new InvalidVertexException("No vertex contains " + outboundElement);
         }
-        if (!existsVertexWith(inboundElement)) {
+
+        MyVertex inVertex = vertexOf(inboundElement);
+        if (inVertex == null) {
             throw new InvalidVertexException("No vertex contains " + inboundElement);
         }
-
-        MyVertex outVertex = vertexOf(outboundElement);
-        MyVertex inVertex = vertexOf(inboundElement);
 
         MyEdge newEdge = new MyEdge(edgeElement, outVertex, inVertex);
 
@@ -186,19 +186,17 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
     @Override
     public synchronized V removeVertex(Vertex<V> v) throws InvalidVertexException {
-        checkVertex(v);
+        MyVertex vertex = checkVertex(v);
 
-        V element = v.element();
+        V element = vertex.element();
 
-        //remove incident edges
-        Collection<Edge<E, V>> inOutEdges = incidentEdges(v);
-        inOutEdges.addAll(outboundEdges(v));
-        
-        for (Edge<E, V> edge : inOutEdges) {
-            edges.remove(edge.element());
-        }
+        //remove both incoming and outgoing edges in a single pass
+        edges.values().removeIf(edge -> {
+            MyEdge myEdge = (MyEdge) edge;
+            return myEdge.getOutbound() == vertex || myEdge.getInbound() == vertex;
+        });
 
-        vertices.remove(v.element());
+        vertices.remove(element);
 
         return element;
     }
@@ -222,7 +220,10 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         MyVertex vertex = checkVertex(v);
 
         V oldElement = vertex.element;
+
+        vertices.remove(oldElement);
         vertex.element = newElement;
+        vertices.put(newElement, vertex);
 
         return oldElement;
     }
@@ -236,18 +237,16 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         MyEdge edge = checkEdge(e);
 
         E oldElement = edge.element;
+
+        edges.remove(oldElement);
         edge.element = newElement;
+        edges.put(newElement, edge);
 
         return oldElement;
     }
 
     private MyVertex vertexOf(V vElement) {
-        for (Vertex<V> v : vertices.values()) {
-            if (v.element().equals(vElement)) {
-                return (MyVertex) v;
-            }
-        }
-        return null;
+        return (MyVertex) vertices.get(vElement);
     }
 
     private boolean existsVertexWith(V vElement) {

@@ -162,15 +162,15 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
             throw new InvalidEdgeException("There's already an edge with this element.");
         }
 
-        if (!existsVertexWith(vElement1)) {
+        MyVertex outVertex = vertexOf(vElement1);
+        if (outVertex == null) {
             throw new InvalidVertexException("No vertex contains " + vElement1);
         }
-        if (!existsVertexWith(vElement2)) {
+
+        MyVertex inVertex = vertexOf(vElement2);
+        if (inVertex == null) {
             throw new InvalidVertexException("No vertex contains " + vElement2);
         }
-
-        MyVertex outVertex = vertexOf(vElement1);
-        MyVertex inVertex = vertexOf(vElement2);
 
         MyEdge newEdge = new MyEdge(edgeElement, outVertex, inVertex);
 
@@ -182,17 +182,14 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     @Override
     public synchronized V removeVertex(Vertex<V> v) throws InvalidVertexException {
-        checkVertex(v);
+        MyVertex vertex = checkVertex(v);
 
-        V element = v.element();
+        V element = vertex.element();
 
-        //remove incident edges
-        Iterable<Edge<E, V>> incidentEdges = incidentEdges(v);
-        for (Edge<E, V> edge : incidentEdges) {
-            edges.remove(edge.element());
-        }
+        //remove incident edges in a single pass
+        edges.values().removeIf(edge -> ((MyEdge) edge).contains(vertex));
 
-        vertices.remove(v.element());
+        vertices.remove(element);
 
         return element;
     }
@@ -216,7 +213,10 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         MyVertex vertex = checkVertex(v);
 
         V oldElement = vertex.element;
+
+        vertices.remove(oldElement);
         vertex.element = newElement;
+        vertices.put(newElement, vertex);
 
         return oldElement;
     }
@@ -230,18 +230,16 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         MyEdge edge = checkEdge(e);
 
         E oldElement = edge.element;
+
+        edges.remove(oldElement);
         edge.element = newElement;
+        edges.put(newElement, edge);
 
         return oldElement;
     }
 
     private MyVertex vertexOf(V vElement) {
-        for (Vertex<V> v : vertices.values()) {
-            if (v.element().equals(vElement)) {
-                return (MyVertex) v;
-            }
-        }
-        return null;
+        return (MyVertex) vertices.get(vElement);
     }
 
     private boolean existsVertexWith(V vElement) {
