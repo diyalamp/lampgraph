@@ -699,61 +699,91 @@ public class SmartGraphPanel<V, E> extends Pane {
     /**
      * Initializes the graphical nodes for all vertices and edges in the graph.
      * <br/>
-     * For each vertex in the graph, creates a corresponding visual node and registers it.
-     * Then, iterates over all edges to create and connect their visual representations, avoiding duplicates.
-     * Finally, adds all vertex nodes to the view, ensuring they are placed above edge representations.
+     * First, creates a visual node for each vertex. Then, iterates over the edge
+     * collection once to create and connect each edge representation. Finally,
+     * adds all vertex nodes to the view, ensuring they are placed above edge representations.
      */
     private void initNodes() {
 
         /* Create vertex graphical representations. */
-        for (Vertex<V> vertex : listOfVertices()) {
+        for (Vertex<V> vertex : theGraph.vertices()) {
 
             SmartGraphVertexNode<V> vertexAnchor = createVertex(vertex, 0, 0);
 
             vertexNodes.put(vertex, vertexAnchor);
         }
 
-        /* Create graphical representations of edges between existing vertices. */
-        List<Edge<E, V>> edgesToPlace = listOfEdges();
+        /*
+         * Create graphical representations of edges in a single pass.
+         * Multiplicity indexes are tracked locally, so createEdge() does not
+         * need to scan all previously created edges for each new edge.
+         */
+        Map<SmartGraphVertexNode<V>, Map<SmartGraphVertexNode<V>, Integer>> multiplicityIndexes =
+                new IdentityHashMap<>();
 
-        for (Vertex<V> vertex : vertexNodes.keySet()) {
+        for (Edge<E, V> edge : theGraph.edges()) {
 
-            Iterable<Edge<E, V>> incidentEdges = theGraph.incidentEdges(vertex);
+            Vertex<V>[] endpoints = edge.vertices();
+            Vertex<V> outVertex = endpoints[0]; // outbound for a digraph
+            Vertex<V> inVertex = endpoints[1];  // inbound for a digraph
 
-            for (Edge<E, V> edge : incidentEdges) {
+            SmartGraphVertexNode<V> graphVertexOut = vertexNodes.get(outVertex);
+            SmartGraphVertexNode<V> graphVertexIn = vertexNodes.get(inVertex);
 
-                // If already plotted, ignore edge.
-                if (!edgesToPlace.contains(edge)) {
-                    continue;
-                }
-
-                Vertex<V> oppositeVertex = theGraph.opposite(vertex, edge);
-
-                SmartGraphVertexNode<V> graphVertexIn = vertexNodes.get(vertex);
-                SmartGraphVertexNode<V> graphVertexOppositeOut = vertexNodes.get(oppositeVertex);
-
-                graphVertexIn.addAdjacentVertex(graphVertexOppositeOut);
-                graphVertexOppositeOut.addAdjacentVertex(graphVertexIn);
-
-                SmartGraphEdgeNode<E,V> graphEdge = createEdge(edge, graphVertexIn, graphVertexOppositeOut);
-
-                // Track already placed edges
-                connections.put(edge, new Tuple<>(vertex, oppositeVertex));
-                addEdge(graphEdge, edge);
-
-                edgesToPlace.remove(edge);
+            // The model may have changed while it was being read; let update() reconcile it.
+            if (graphVertexOut == null || graphVertexIn == null) {
+                continue;
             }
 
+            graphVertexOut.addAdjacentVertex(graphVertexIn);
+            graphVertexIn.addAdjacentVertex(graphVertexOut);
+
+            int multiplicityIndex = nextMultiplicityIndex(
+                    multiplicityIndexes, graphVertexIn, graphVertexOut);
+
+            SmartGraphEdgeNode<E,V> graphEdge = createEdge(
+                    edge, graphVertexIn, graphVertexOut, multiplicityIndex);
+
+            connections.put(edge, new Tuple<>(outVertex, inVertex));
+            addEdge(graphEdge, edge);
         }
 
         /*
          * Vertices are added after to maintain a z-order of (edges -> vertices)
          */
-        for (Vertex<V> vertex : vertexNodes.keySet()) {
-            SmartGraphVertexNode<V> v = vertexNodes.get(vertex);
-
-            addVertex(v);
+        for (SmartGraphVertexNode<V> vertex : vertexNodes.values()) {
+            addVertex(vertex);
         }
+    }
+
+    /**
+     * Returns the next multiplicity index for the unordered pair of vertices.
+     * <br/>
+     * Both directions are updated so that the order of the endpoints does not matter.
+     *
+     * @param counters multiplicity counters per vertex pair
+     * @param first first vertex node
+     * @param second second vertex node
+     * @return the next multiplicity index for the pair
+     */
+    private int nextMultiplicityIndex(
+            Map<SmartGraphVertexNode<V>, Map<SmartGraphVertexNode<V>, Integer>> counters,
+            SmartGraphVertexNode<V> first,
+            SmartGraphVertexNode<V> second) {
+
+        Map<SmartGraphVertexNode<V>, Integer> firstCounters =
+                counters.computeIfAbsent(first, key -> new IdentityHashMap<>());
+
+        int index = firstCounters.getOrDefault(second, 0);
+        firstCounters.put(second, index + 1);
+
+        if (first != second) {
+            Map<SmartGraphVertexNode<V>, Integer> secondCounters =
+                    counters.computeIfAbsent(second, key -> new IdentityHashMap<>());
+            secondCounters.put(first, index + 1);
+        }
+
+        return index;
     }
 
     /**
@@ -788,7 +818,22 @@ public class SmartGraphPanel<V, E> extends Pane {
      */
     private SmartGraphEdgeNode<E,V> createEdge(Edge<E, V> edge, SmartGraphVertexNode<V> graphVertexInbound, SmartGraphVertexNode<V> graphVertexOutbound) {
         int maxIndex = getMaxMultiplicityIndexBetween(graphVertexInbound, graphVertexOutbound);
-        return new SmartGraphEdgeNode<>(edge, graphVertexInbound, graphVertexOutbound, ++maxIndex);
+        return createEdge(edge, graphVertexInbound, graphVertexOutbound, ++maxIndex);
+    }
+
+    /**
+     * Creates a visual representation of the given edge with an explicit
+     * multiplicity index.
+     *
+     * @param edge the edge to be represented
+     * @param graphVertexInbound the inbound vertex node
+     * @param graphVertexOutbound the outbound vertex node
+     * @param multiplicityIndex the multiplicity index for this edge
+     * @return a newly created {@code SmartGraphEdgeNode}
+     */
+    private SmartGraphEdgeNode<E,V> createEdge(Edge<E, V> edge, SmartGraphVertexNode<V> graphVertexInbound,
+                                               SmartGraphVertexNode<V> graphVertexOutbound, int multiplicityIndex) {
+        return new SmartGraphEdgeNode<>(edge, graphVertexInbound, graphVertexOutbound, multiplicityIndex);
     }
 
     /**
@@ -1485,21 +1530,6 @@ public class SmartGraphPanel<V, E> extends Pane {
         }
 
         return max;
-    }
-
-    /**
-     * Returns a list of all edges in the graph.
-     * @return a LinkedList containing all edges
-     */
-    private List<Edge<E, V>> listOfEdges() {
-        return new LinkedList<>(theGraph.edges());
-    }
-
-    /**
-     * Returns a list of all vertices in the graph.
-     * @return a LinkedList containing all vertices
-     */private List<Vertex<V>> listOfVertices() {
-        return new LinkedList<>(theGraph.vertices());
     }
 
     /**
