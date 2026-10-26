@@ -1429,8 +1429,9 @@ public class SmartGraphPanel<V, E> extends Pane {
     private int getTotalEdgesBetweenInModel(Vertex<V> v, Vertex<V> u) {
         int count = 0;
         for (Edge<E, V> edge : theGraph.edges()) {
-            if (edge.vertices()[0] == v && edge.vertices()[1] == u
-                    || edge.vertices()[0] == u && edge.vertices()[1] == v) {
+            Vertex<V>[] endpoints = edge.vertices();
+            if (endpoints[0] == v && endpoints[1] == u
+                    || endpoints[0] == u && endpoints[1] == v) {
                 count++;
             }
         }

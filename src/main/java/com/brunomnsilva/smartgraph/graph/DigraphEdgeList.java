@@ -167,11 +167,8 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
             return null; /* this edge does not connect vertex v */
         }
 
-        if (edge.vertices()[0] == v) {
-            return edge.vertices()[1];
-        } else {
-            return edge.vertices()[0];
-        }
+        Vertex<V>[] endpoints = edge.vertices();
+        return endpoints[0] == v ? endpoints[1] : endpoints[0];
 
     }
 
