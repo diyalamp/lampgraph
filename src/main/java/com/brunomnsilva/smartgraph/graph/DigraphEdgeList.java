@@ -87,7 +87,8 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
         /* find and edge that goes outbound ---> inbound */
         for (Edge<E, V> edge : edges.values()) {
-            if (((MyEdge) edge).getOutbound() == outbound && ((MyEdge) edge).getInbound() == inbound) {
+            MyEdge myEdge = (MyEdge) edge;
+            if (myEdge.getOutbound() == outbound && myEdge.getInbound() == inbound) {
                 return true;
             }
         }

@@ -114,7 +114,8 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
         /* find and edge that contains both u and v */
         for (Edge<E, V> edge : edges.values()) {
-            if (((MyEdge) edge).contains(u) && ((MyEdge) edge).contains(v)) {
+            MyEdge myEdge = (MyEdge) edge;
+            if (myEdge.contains(u) && myEdge.contains(v)) {
                 return true;
             }
         }
