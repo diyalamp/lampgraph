@@ -101,9 +101,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
     @Override
     public synchronized Edge<E, V> insertEdge(Vertex<V> outbound, Vertex<V> inbound, E edgeElement) throws InvalidVertexException, InvalidEdgeException {
-        if (existsEdgeWith(edgeElement)) {
-            throw new InvalidEdgeException("There's already an edge with this element.");
-        }
+        requireEdgeElementUnique(edgeElement);
 
         MyVertex outVertex = checkVertex(outbound);
         MyVertex inVertex = checkVertex(inbound);
@@ -117,19 +115,10 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
     @Override
     public synchronized Edge<E, V> insertEdge(V outboundElement, V inboundElement, E edgeElement) throws InvalidVertexException, InvalidEdgeException {
-        if (existsEdgeWith(edgeElement)) {
-            throw new InvalidEdgeException("There's already an edge with this element.");
-        }
+        requireEdgeElementUnique(edgeElement);
 
-        MyVertex outVertex = vertexOf(outboundElement);
-        if (outVertex == null) {
-            throw new InvalidVertexException("No vertex contains " + outboundElement);
-        }
-
-        MyVertex inVertex = vertexOf(inboundElement);
-        if (inVertex == null) {
-            throw new InvalidVertexException("No vertex contains " + inboundElement);
-        }
+        MyVertex outVertex = findVertex(outboundElement);
+        MyVertex inVertex = findVertex(inboundElement);
 
         MyEdge newEdge = new MyEdge(edgeElement, outVertex, inVertex);
 
@@ -174,9 +163,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
     @Override
     public synchronized Vertex<V> insertVertex(V vElement) throws InvalidVertexException {
-        if (existsVertexWith(vElement)) {
-            throw new InvalidVertexException("There's already a vertex with this element.");
-        }
+        requireVertexElementUnique(vElement);
 
         MyVertex newVertex = new MyVertex(vElement);
 
@@ -214,9 +201,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
     @Override
     public synchronized V replace(Vertex<V> v, V newElement) throws InvalidVertexException {
-        if (existsVertexWith(newElement)) {
-            throw new InvalidVertexException("There's already a vertex with this element.");
-        }
+        requireVertexElementUnique(newElement);
 
         MyVertex vertex = checkVertex(v);
 
@@ -231,9 +216,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
     @Override
     public synchronized E replace(Edge<E, V> e, E newElement) throws InvalidEdgeException {
-        if (existsEdgeWith(newElement)) {
-            throw new InvalidEdgeException("There's already an edge with this element.");
-        }
+        requireEdgeElementUnique(newElement);
 
         MyEdge edge = checkEdge(e);
 
@@ -246,18 +229,6 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         return oldElement;
     }
 
-    private MyVertex vertexOf(V vElement) {
-        return (MyVertex) vertices.get(vElement);
-    }
-
-    private boolean existsVertexWith(V vElement) {
-        return vertices.containsKey(vElement);
-    }
-
-    private boolean existsEdgeWith(E edgeElement) {
-        return edges.containsKey(edgeElement);
-    }
-    
     @Override
     public String toString() {
         Collection<Vertex<V>> vertexSnapshot;
@@ -391,6 +362,45 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         }
 
         return edge;
+    }
+
+    /**
+     * Finds the vertex whose element is the given one.
+     *
+     * @param vElement vertex element
+     * @return the vertex with the given element
+     * @throws InvalidVertexException if no vertex contains this element
+     */
+    private MyVertex findVertex(V vElement) throws InvalidVertexException {
+        MyVertex vertex = (MyVertex) vertices.get(vElement);
+        if (vertex == null) {
+            throw new InvalidVertexException("No vertex contains " + vElement);
+        }
+        return vertex;
+    }
+
+    /**
+     * Ensures that no vertex with the given element exists in this graph.
+     *
+     * @param vElement element to check
+     * @throws InvalidVertexException if a vertex with this element already exists
+     */
+    private void requireVertexElementUnique(V vElement) throws InvalidVertexException {
+        if (vertices.containsKey(vElement)) {
+            throw new InvalidVertexException("There's already a vertex with this element.");
+        }
+    }
+
+    /**
+     * Ensures that no edge with the given element exists in this graph.
+     *
+     * @param edgeElement element to check
+     * @throws InvalidEdgeException if an edge with this element already exists
+     */
+    private void requireEdgeElementUnique(E edgeElement) throws InvalidEdgeException {
+        if (edges.containsKey(edgeElement)) {
+            throw new InvalidEdgeException("There's already an edge with this element.");
+        }
     }
     
 }

@@ -125,9 +125,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     @Override
     public synchronized Vertex<V> insertVertex(V vElement) throws InvalidVertexException {
-        if (existsVertexWith(vElement)) {
-            throw new InvalidVertexException("There's already a vertex with this element.");
-        }
+        requireVertexElementUnique(vElement);
 
         MyVertex newVertex = new MyVertex(vElement);
 
@@ -140,9 +138,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     public synchronized Edge<E, V> insertEdge(Vertex<V> u, Vertex<V> v, E edgeElement) 
             throws InvalidVertexException, InvalidEdgeException {
 
-        if (existsEdgeWith(edgeElement)) {
-            throw new InvalidEdgeException("There's already an edge with this element.");
-        }
+        requireEdgeElementUnique(edgeElement);
 
         MyVertex outVertex = checkVertex(u);
         MyVertex inVertex = checkVertex(v);
@@ -158,20 +154,11 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     @Override
     public synchronized Edge<E, V> insertEdge(V vElement1, V vElement2, E edgeElement) 
             throws InvalidVertexException, InvalidEdgeException {
-        
-        if (existsEdgeWith(edgeElement)) {
-            throw new InvalidEdgeException("There's already an edge with this element.");
-        }
 
-        MyVertex outVertex = vertexOf(vElement1);
-        if (outVertex == null) {
-            throw new InvalidVertexException("No vertex contains " + vElement1);
-        }
+        requireEdgeElementUnique(edgeElement);
 
-        MyVertex inVertex = vertexOf(vElement2);
-        if (inVertex == null) {
-            throw new InvalidVertexException("No vertex contains " + vElement2);
-        }
+        MyVertex outVertex = findVertex(vElement1);
+        MyVertex inVertex = findVertex(vElement2);
 
         MyEdge newEdge = new MyEdge(edgeElement, outVertex, inVertex);
 
@@ -207,9 +194,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     @Override
     public synchronized V replace(Vertex<V> v, V newElement) throws InvalidVertexException {
-        if (existsVertexWith(newElement)) {
-            throw new InvalidVertexException("There's already a vertex with this element.");
-        }
+        requireVertexElementUnique(newElement);
 
         MyVertex vertex = checkVertex(v);
 
@@ -224,9 +209,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     @Override
     public synchronized E replace(Edge<E, V> e, E newElement) throws InvalidEdgeException {
-        if (existsEdgeWith(newElement)) {
-            throw new InvalidEdgeException("There's already an edge with this element.");
-        }
+        requireEdgeElementUnique(newElement);
 
         MyEdge edge = checkEdge(e);
 
@@ -237,18 +220,6 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         edges.put(newElement, edge);
 
         return oldElement;
-    }
-
-    private MyVertex vertexOf(V vElement) {
-        return (MyVertex) vertices.get(vElement);
-    }
-
-    private boolean existsVertexWith(V vElement) {
-        return vertices.containsKey(vElement);
-    }
-
-    private boolean existsEdgeWith(E edgeElement) {
-        return edges.containsKey(edgeElement);
     }
 
     @Override
@@ -375,5 +346,44 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         }
 
         return edge;
+    }
+
+    /**
+     * Finds the vertex whose element is the given one.
+     *
+     * @param vElement vertex element
+     * @return the vertex with the given element
+     * @throws InvalidVertexException if no vertex contains this element
+     */
+    private MyVertex findVertex(V vElement) throws InvalidVertexException {
+        MyVertex vertex = (MyVertex) vertices.get(vElement);
+        if (vertex == null) {
+            throw new InvalidVertexException("No vertex contains " + vElement);
+        }
+        return vertex;
+    }
+
+    /**
+     * Ensures that no vertex with the given element exists in this graph.
+     *
+     * @param vElement element to check
+     * @throws InvalidVertexException if a vertex with this element already exists
+     */
+    private void requireVertexElementUnique(V vElement) throws InvalidVertexException {
+        if (vertices.containsKey(vElement)) {
+            throw new InvalidVertexException("There's already a vertex with this element.");
+        }
+    }
+
+    /**
+     * Ensures that no edge with the given element exists in this graph.
+     *
+     * @param edgeElement element to check
+     * @throws InvalidEdgeException if an edge with this element already exists
+     */
+    private void requireEdgeElementUnique(E edgeElement) throws InvalidEdgeException {
+        if (edges.containsKey(edgeElement)) {
+            throw new InvalidEdgeException("There's already an edge with this element.");
+        }
     }
 }
