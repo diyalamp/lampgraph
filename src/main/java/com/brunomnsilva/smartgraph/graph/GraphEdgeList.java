@@ -98,12 +98,13 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         checkVertex(v);
         MyEdge edge = checkEdge(e);
 
-        if (!edge.contains(v)) {
+        if (edge.vertexA == v) {
+            return edge.vertexB;
+        } else if (edge.vertexB == v) {
+            return edge.vertexA;
+        } else {
             return null; /* this edge does not connect vertex v */
         }
-
-        Vertex<V>[] endpoints = edge.vertices();
-        return endpoints[0] == v ? endpoints[1] : endpoints[0];
 
     }
 

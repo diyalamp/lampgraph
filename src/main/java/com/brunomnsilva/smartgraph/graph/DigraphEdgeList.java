@@ -152,12 +152,13 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         checkVertex(v);
         MyEdge edge = checkEdge(e);
 
-        if (!edge.contains(v)) {
+        if (edge.vertexOutbound == v) {
+            return edge.vertexInbound;
+        } else if (edge.vertexInbound == v) {
+            return edge.vertexOutbound;
+        } else {
             return null; /* this edge does not connect vertex v */
         }
-
-        Vertex<V>[] endpoints = edge.vertices();
-        return endpoints[0] == v ? endpoints[1] : endpoints[0];
 
     }
 
@@ -292,10 +293,6 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         @Override
         public E element() {
             return this.element;
-        }
-
-        public boolean contains(Vertex<V> v) {
-            return (vertexOutbound == v || vertexInbound == v);
         }
 
         @Override
