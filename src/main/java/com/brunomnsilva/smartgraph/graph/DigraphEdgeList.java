@@ -62,7 +62,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         List<Edge<E, V>> incidentEdges = new ArrayList<>();
         for (Edge<E, V> edge : edges.values()) {
 
-            if (((MyEdge) edge).getInbound() == inbound) {
+            if (((MyEdge) edge).vertexInbound == inbound) {
                 incidentEdges.add(edge);
             }
         }
@@ -76,7 +76,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         List<Edge<E, V>> outboundEdges = new ArrayList<>();
         for (Edge<E, V> edge : edges.values()) {
 
-            if (((MyEdge) edge).getOutbound() == outbound) {
+            if (((MyEdge) edge).vertexOutbound == outbound) {
                 outboundEdges.add(edge);
             }
         }
@@ -92,7 +92,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         /* find and edge that goes outbound ---> inbound */
         for (Edge<E, V> edge : edges.values()) {
             MyEdge myEdge = (MyEdge) edge;
-            if (myEdge.getOutbound() == outbound && myEdge.getInbound() == inbound) {
+            if (myEdge.vertexOutbound == outbound && myEdge.vertexInbound == inbound) {
                 return true;
             }
         }
@@ -181,7 +181,7 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         //remove both incoming and outgoing edges in a single pass
         edges.values().removeIf(edge -> {
             MyEdge myEdge = (MyEdge) edge;
-            return myEdge.getOutbound() == vertex || myEdge.getInbound() == vertex;
+            return myEdge.vertexOutbound == vertex || myEdge.vertexInbound == vertex;
         });
 
         vertices.remove(element);
@@ -312,14 +312,6 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         public String toString() {
             return "Edge{{" + element + "}, vertexOutbound=" + vertexOutbound.toString()
                     + ", vertexInbound=" + vertexInbound.toString() + '}';
-        }
-        
-        public Vertex<V> getOutbound() {
-            return vertexOutbound;
-        }
-        
-        public Vertex<V> getInbound() {
-            return vertexInbound;
         }
     }
 

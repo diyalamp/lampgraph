@@ -84,7 +84,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         for (Edge<E, V> edge : edges.values()) {
 
             if (((MyEdge) edge).contains(v)) {
-                /* edge.vertices()[0] == v || edge.vertices()[1] == v */
+                /* an edge is incident to a vertex when it is one of its endpoints */
                 incidentEdges.add(edge);
             }
 
@@ -271,14 +271,14 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     class MyEdge implements Edge<E, V> {
 
         volatile E element;
-        final Vertex<V> vertexOutbound;
-        final Vertex<V> vertexInbound;
+        final Vertex<V> vertexA;
+        final Vertex<V> vertexB;
         final Graph<V,E> parent;
 
-        public MyEdge(E element, Vertex<V> vertexOutbound, Vertex<V> vertexInbound) {
+        public MyEdge(E element, Vertex<V> vertexA, Vertex<V> vertexB) {
             this.element = element;
-            this.vertexOutbound = vertexOutbound;
-            this.vertexInbound = vertexInbound;
+            this.vertexA = vertexA;
+            this.vertexB = vertexB;
             this.parent = GraphEdgeList.this;
         }
 
@@ -288,22 +288,22 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         }
 
         public boolean contains(Vertex<V> v) {
-            return (vertexOutbound == v || vertexInbound == v);
+            return (vertexA == v || vertexB == v);
         }
 
         @Override
         public Vertex<V>[] vertices() {
             Vertex<V>[] vertices = new Vertex[2];
-            vertices[0] = vertexOutbound;
-            vertices[1] = vertexInbound;
+            vertices[0] = vertexA;
+            vertices[1] = vertexB;
 
             return vertices;
         }
 
         @Override
         public String toString() {
-            return "Edge{{" + element + "}, vertexOutbound=" + vertexOutbound.toString()
-                    + ", vertexInbound=" + vertexInbound.toString() + '}';
+            return "Edge{{" + element + "}, vertexA=" + vertexA.toString()
+                    + ", vertexB=" + vertexB.toString() + '}';
         }
     }
 
