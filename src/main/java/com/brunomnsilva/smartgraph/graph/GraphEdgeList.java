@@ -293,6 +293,7 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public Vertex<V>[] vertices() {
             Vertex<V>[] vertices = new Vertex[2];
             vertices[0] = vertexA;
