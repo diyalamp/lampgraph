@@ -27,6 +27,17 @@ through a [force-directed algorithm](https://en.wikipedia.org/wiki/Force-directe
 
 ### What's new?
 
+- (2.6.0) Graph implementation hardening:
+    - `GraphEdgeList` and `DigraphEdgeList` are now thread-safe for individual operations; sequences
+      are not atomic, so synchronize on the graph instance if you need to group mutations.
+    - Constant-time vertex/edge ownership validation, faster element-based lookups and one-pass
+      incident-edge removal.
+    - Fixed `replace(Vertex, ...)` / `replace(Edge, ...)` not re-indexing the graph, so the new element
+      is immediately usable.
+    - Faster panel initialization: edges are placed in a single pass, with multiplicity indexes
+      tracked locally.
+    - Added a JUnit 5 test suite for both implementations. No public API changes.
+
 - (2.5.0) Interaction events:
     - New event-based click API for vertices, edges and the canvas:
       `setVertexClickHandler`, `setEdgeClickHandler` and `setCanvasClickHandler`.
@@ -108,7 +119,7 @@ Use `--enable-native-access=ALL-UNNAMED` instead if JavaFX is on the classpath r
 
 #### Maven
 
-Example for Maven, where `x.y.z` is the library version, e.g., `2.5.0`:
+Example for Maven, where `x.y.z` is the library version, e.g., `2.6.0`:
 
 ```xml
 <properties>

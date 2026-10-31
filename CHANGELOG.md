@@ -1,5 +1,21 @@
 ## Changelog
 
+- (2.6.0) Graph implementation hardening:
+    - `GraphEdgeList` and `DigraphEdgeList` are now thread-safe for individual operations: every
+      mutation and query synchronizes on the graph instance. Sequences of operations are not atomic;
+      callers that need to group mutations can synchronize on the graph instance.
+    - Vertex/edge ownership validation is now constant-time instead of scanning the backing maps.
+    - Faster mutations: element-based `insertEdge`, `replace` and `removeVertex` use direct map
+      lookups, and incident edges are removed in a single pass (incoming and outgoing for digraphs).
+    - Fixed `replace(Vertex, ...)` and `replace(Edge, ...)` not re-indexing the backing maps. The new
+      element is immediately usable by element-based operations and the replaced element is released.
+    - Faster `opposite(...)` and fewer temporary allocations in the update paths.
+    - Faster panel initialization: edges are placed in a single pass over the edge collection, with
+      multiplicity indexes tracked locally instead of rescanning already-placed edges.
+    - Added a JUnit 5 test suite (54 tests) covering both graph implementations. The dependency is
+      `test`-scoped and is not part of the published artifact.
+    - Internal cleanups for readability in the graph implementations. No public API changes.
+
 - (2.5.0) Interaction events:
     - New event-based click API for vertices, edges and the canvas:
       `setVertexClickHandler`, `setEdgeClickHandler` and `setCanvasClickHandler`.
