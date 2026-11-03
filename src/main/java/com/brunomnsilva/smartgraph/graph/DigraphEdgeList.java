@@ -177,13 +177,10 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
     public synchronized V removeVertex(Vertex<V> v) throws InvalidVertexException {
         MyVertex vertex = checkVertex(v);
 
-        V element = vertex.element();
+        V element = vertex.element;
 
-        //remove both incoming and outgoing edges in a single pass
-        edges.values().removeIf(edge -> {
-            MyEdge myEdge = (MyEdge) edge;
-            return myEdge.vertexOutbound == vertex || myEdge.vertexInbound == vertex;
-        });
+        vertex.isRemoved = true;
+        removeIncidentEdges(vertex);
 
         vertices.remove(element);
 
@@ -192,10 +189,11 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
     @Override
     public synchronized E removeEdge(Edge<E, V> e) throws InvalidEdgeException {
-        checkEdge(e);
+        MyEdge edge = checkEdge(e);
 
-        E element = e.element();
-        edges.remove(e.element());
+        E element = edge.element;
+        edge.isRemoved = true;
+        edges.remove(element);
 
         return element;
     }
@@ -259,10 +257,12 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
 
         volatile V element;
         final Digraph<V,?> parent;
+        volatile boolean isRemoved;
 
         public MyVertex(V element) {
             this.element = element;
             this.parent = DigraphEdgeList.this;
+            this.isRemoved = false;
         }
 
         @Override
@@ -282,12 +282,14 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         final Vertex<V> vertexOutbound;
         final Vertex<V> vertexInbound;
         final Digraph<V,E> parent;
+        volatile boolean isRemoved;
 
         public MyEdge(E element, Vertex<V> vertexOutbound, Vertex<V> vertexInbound) {
             this.element = element;
             this.vertexOutbound = vertexOutbound;
             this.vertexInbound = vertexInbound;
             this.parent = DigraphEdgeList.this;
+            this.isRemoved = false;
         }
 
         @Override
@@ -333,6 +335,10 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
             throw new InvalidVertexException("Vertex does not belong to this graph.");
         }
 
+        if (vertex.isRemoved) {
+            throw new InvalidVertexException("Vertex was removed from this graph.");
+        }
+
         return vertex;
     }
 
@@ -343,14 +349,35 @@ public class DigraphEdgeList<V, E> implements Digraph<V, E> {
         try {
             edge = (MyEdge) e;
         } catch (ClassCastException ex) {
-            throw new InvalidVertexException("Not an adge.");
+            throw new InvalidEdgeException("Not an edge.");
         }
 
         if (edge.parent != DigraphEdgeList.this) {
             throw new InvalidEdgeException("Edge does not belong to this graph.");
         }
 
+        if (edge.isRemoved) {
+            throw new InvalidEdgeException("Edge was removed from this graph.");
+        }
+
         return edge;
+    }
+
+    /**
+     * Marks and removes all edges incident to the given vertex, both incoming
+     * and outgoing.
+     *
+     * @param vertex vertex whose incident edges are removed
+     */
+    private void removeIncidentEdges(MyVertex vertex) {
+        Iterator<Edge<E, V>> it = edges.values().iterator();
+        while (it.hasNext()) {
+            MyEdge edge = (MyEdge) it.next();
+            if (edge.vertexOutbound == vertex || edge.vertexInbound == vertex) {
+                edge.isRemoved = true;
+                it.remove();
+            }
+        }
     }
 
     /**

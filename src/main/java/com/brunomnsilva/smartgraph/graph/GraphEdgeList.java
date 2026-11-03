@@ -173,10 +173,10 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
     public synchronized V removeVertex(Vertex<V> v) throws InvalidVertexException {
         MyVertex vertex = checkVertex(v);
 
-        V element = vertex.element();
+        V element = vertex.element;
 
-        //remove incident edges in a single pass
-        edges.values().removeIf(edge -> ((MyEdge) edge).contains(vertex));
+        vertex.isRemoved = true;
+        removeIncidentEdges(vertex);
 
         vertices.remove(element);
 
@@ -185,10 +185,11 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
     @Override
     public synchronized E removeEdge(Edge<E, V> e) throws InvalidEdgeException {
-        checkEdge(e);
+        MyEdge edge = checkEdge(e);
 
-        E element = e.element();
-        edges.remove(e.element());
+        E element = edge.element;
+        edge.isRemoved = true;
+        edges.remove(element);
 
         return element;
     }
@@ -252,10 +253,12 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
 
         volatile V element;
         final Graph<V,?> parent;
+        volatile boolean isRemoved;
 
         public MyVertex(V element) {
             this.element = element;
             this.parent = GraphEdgeList.this;
+            this.isRemoved = false;
         }
 
         @Override
@@ -275,12 +278,14 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         final Vertex<V> vertexA;
         final Vertex<V> vertexB;
         final Graph<V,E> parent;
+        volatile boolean isRemoved;
 
         public MyEdge(E element, Vertex<V> vertexA, Vertex<V> vertexB) {
             this.element = element;
             this.vertexA = vertexA;
             this.vertexB = vertexB;
             this.parent = GraphEdgeList.this;
+            this.isRemoved = false;
         }
 
         @Override
@@ -330,6 +335,10 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
             throw new InvalidVertexException("Vertex does not belong to this graph.");
         }
 
+        if (vertex.isRemoved) {
+            throw new InvalidVertexException("Vertex was removed from this graph.");
+        }
+
         return vertex;
     }
 
@@ -340,14 +349,34 @@ public class GraphEdgeList<V, E> implements Graph<V, E> {
         try {
             edge = (MyEdge) e;
         } catch (ClassCastException ex) {
-            throw new InvalidVertexException("Not an adge.");
+            throw new InvalidEdgeException("Not an edge.");
         }
 
         if (edge.parent != GraphEdgeList.this) {
             throw new InvalidEdgeException("Edge does not belong to this graph.");
         }
 
+        if (edge.isRemoved) {
+            throw new InvalidEdgeException("Edge was removed from this graph.");
+        }
+
         return edge;
+    }
+
+    /**
+     * Marks and removes all edges incident to the given vertex.
+     *
+     * @param vertex vertex whose incident edges are removed
+     */
+    private void removeIncidentEdges(MyVertex vertex) {
+        Iterator<Edge<E, V>> it = edges.values().iterator();
+        while (it.hasNext()) {
+            MyEdge edge = (MyEdge) it.next();
+            if (edge.contains(vertex)) {
+                edge.isRemoved = true;
+                it.remove();
+            }
+        }
     }
 
     /**

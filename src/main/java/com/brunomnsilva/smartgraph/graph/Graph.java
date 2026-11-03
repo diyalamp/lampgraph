@@ -28,6 +28,11 @@ import java.util.Collection;
 /**
  * A graph is made up of a set of vertices connected by edges, where the edges 
  * have no direction associated with them, i.e., they establish a two-way connection.
+ * <br>
+ * Once a vertex or an edge is removed, it is no longer part of the graph. Passing
+ * a removed vertex or edge to an operation that requires membership throws
+ * {@link InvalidVertexException} or {@link InvalidEdgeException}, respectively.
+ * The removed object can still be inspected through its accessors.
  *
  * @param <V> Type of element stored at a vertex
  * @param <E> Type of element stored at an edge
@@ -186,6 +191,9 @@ public interface Graph<V, E> {
     /**
      * Removes a vertex, along with all of its incident edges, and returns the element
      * stored at the removed vertex.
+     * <br>
+     * The removed vertex and its incident edges are no longer valid for graph
+     * operations.
      * 
      * @param v     vertex to remove
      * 
@@ -196,7 +204,9 @@ public interface Graph<V, E> {
     V removeVertex(Vertex<V> v) throws InvalidVertexException;
 
     /**
-     * Removes an edge and return its element.
+     * Removes an edge and returns its element.
+     * <br>
+     * The removed edge is no longer valid for graph operations.
      * 
      * @param e     edge to remove
      * 
