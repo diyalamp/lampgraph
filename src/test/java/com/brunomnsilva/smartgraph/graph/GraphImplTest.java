@@ -32,6 +32,30 @@ class GraphImplTest {
         }
     }
 
+    @Test
+    @DisplayName("element types from another implementation are rejected")
+    void elementTypesFromOtherImplementationsAreRejected() {
+        Graph<String, Integer> undirected = new GraphEdgeList<>();
+        Digraph<String, Integer> directed = new DigraphEdgeList<>();
+
+        Vertex<String> undirectedVertex = undirected.insertVertex("A");
+        Vertex<String> undirectedOther = undirected.insertVertex("B");
+        Edge<Integer, String> undirectedEdge = undirected.insertEdge(undirectedVertex, undirectedOther, 10);
+
+        Vertex<String> directedVertex = directed.insertVertex("X");
+        Vertex<String> directedOther = directed.insertVertex("Y");
+        Edge<Integer, String> directedEdge = directed.insertEdge(directedVertex, directedOther, 11);
+
+        assertAll(
+                () -> assertThrows(InvalidVertexException.class, () -> directed.removeVertex(undirectedVertex)),
+                () -> assertThrows(InvalidVertexException.class, () -> directed.incidentEdges(undirectedVertex)),
+                () -> assertThrows(InvalidEdgeException.class, () -> directed.removeEdge(undirectedEdge)),
+                () -> assertThrows(InvalidEdgeException.class, () -> directed.opposite(directedVertex, undirectedEdge)),
+                () -> assertThrows(InvalidVertexException.class, () -> undirected.removeVertex(directedVertex)),
+                () -> assertThrows(InvalidEdgeException.class, () -> undirected.removeEdge(directedEdge))
+        );
+    }
+
     @Nested
     @DisplayName("GraphEdgeList (undirected graph)")
     class UndirectedGraphTest {
@@ -365,6 +389,77 @@ class GraphImplTest {
             Edge<Integer, String> reinserted = graph.insertEdge(a, c, 10);
             assertEquals(10, reinserted.element());
             assertEquals(2, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("a removed vertex is rejected by graph operations")
+        void removedVertexIsRejected() {
+            graph.removeVertex(a);
+
+            assertAll(
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.removeVertex(a)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.incidentEdges(a)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.areAdjacent(a, b)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.areAdjacent(b, a)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.insertEdge(a, b, 10)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.insertEdge("A", "B", 11)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.replace(a, "Z"))
+            );
+            assertEquals(2, graph.numVertices());
+            assertEquals(0, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("edges removed with a vertex are rejected by graph operations")
+        void edgesRemovedWithVertexAreRejected() {
+            Edge<Integer, String> ab = graph.insertEdge(a, b, 10);
+            Edge<Integer, String> loop = graph.insertEdge(a, a, 11);
+            Edge<Integer, String> bc = graph.insertEdge(b, c, 12);
+
+            assertEquals("A", graph.removeVertex(a));
+
+            assertAll(
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(loop)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.opposite(b, ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.replace(ab, 20))
+            );
+            assertEquals(1, graph.numEdges());
+            assertContainsExactly(graph.edges(), bc);
+        }
+
+        @Test
+        @DisplayName("a removed edge is rejected by graph operations")
+        void removedEdgeIsRejected() {
+            Edge<Integer, String> ab = graph.insertEdge(a, b, 10);
+            graph.insertEdge(b, c, 11);
+
+            assertEquals(10, graph.removeEdge(ab));
+
+            assertAll(
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.opposite(a, ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.replace(ab, 20))
+            );
+            assertEquals(1, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("reinserting a removed element creates a new independent handle")
+        void removedElementCanBeReinserted() {
+            graph.removeVertex(a);
+
+            Vertex<String> newA = graph.insertVertex("A");
+            assertNotSame(a, newA);
+            assertThrows(InvalidVertexException.class, () -> graph.removeVertex(a));
+
+            Edge<Integer, String> edge = graph.insertEdge(newA, b, 10);
+            graph.removeEdge(edge);
+
+            Edge<Integer, String> newEdge = graph.insertEdge(newA, b, 10);
+            assertNotSame(edge, newEdge);
+            assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(edge));
+            assertContainsExactly(graph.edges(), newEdge);
         }
 
         @Test
@@ -714,6 +809,80 @@ class GraphImplTest {
             Edge<Integer, String> reinserted = graph.insertEdge(a, c, 10);
             assertEquals(10, reinserted.element());
             assertEquals(2, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("a removed vertex is rejected by graph operations")
+        void removedVertexIsRejected() {
+            graph.removeVertex(a);
+
+            assertAll(
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.removeVertex(a)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.incidentEdges(a)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.outboundEdges(a)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.areAdjacent(a, b)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.areAdjacent(b, a)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.insertEdge(a, b, 10)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.insertEdge("A", "B", 11)),
+                    () -> assertThrows(InvalidVertexException.class, () -> graph.replace(a, "Z"))
+            );
+            assertEquals(2, graph.numVertices());
+            assertEquals(0, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("edges removed with a vertex are rejected by graph operations")
+        void edgesRemovedWithVertexAreRejected() {
+            Edge<Integer, String> ab = graph.insertEdge(a, b, 10);
+            Edge<Integer, String> ca = graph.insertEdge(c, a, 11);
+            Edge<Integer, String> loop = graph.insertEdge(a, a, 12);
+            Edge<Integer, String> bc = graph.insertEdge(b, c, 13);
+
+            assertEquals("A", graph.removeVertex(a));
+
+            assertAll(
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(ca)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(loop)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.opposite(b, ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.replace(ab, 20))
+            );
+            assertEquals(1, graph.numEdges());
+            assertContainsExactly(graph.edges(), bc);
+        }
+
+        @Test
+        @DisplayName("a removed edge is rejected by graph operations")
+        void removedEdgeIsRejected() {
+            Edge<Integer, String> ab = graph.insertEdge(a, b, 10);
+            graph.insertEdge(b, c, 11);
+
+            assertEquals(10, graph.removeEdge(ab));
+
+            assertAll(
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.opposite(a, ab)),
+                    () -> assertThrows(InvalidEdgeException.class, () -> graph.replace(ab, 20))
+            );
+            assertEquals(1, graph.numEdges());
+        }
+
+        @Test
+        @DisplayName("reinserting a removed element creates a new independent handle")
+        void removedElementCanBeReinserted() {
+            graph.removeVertex(a);
+
+            Vertex<String> newA = graph.insertVertex("A");
+            assertNotSame(a, newA);
+            assertThrows(InvalidVertexException.class, () -> graph.removeVertex(a));
+
+            Edge<Integer, String> edge = graph.insertEdge(newA, b, 10);
+            graph.removeEdge(edge);
+
+            Edge<Integer, String> newEdge = graph.insertEdge(newA, b, 10);
+            assertNotSame(edge, newEdge);
+            assertThrows(InvalidEdgeException.class, () -> graph.removeEdge(edge));
+            assertContainsExactly(graph.edges(), newEdge);
         }
 
         @Test
