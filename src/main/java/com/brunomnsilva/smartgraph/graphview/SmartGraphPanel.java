@@ -26,6 +26,7 @@ package com.brunomnsilva.smartgraph.graphview;
 import com.brunomnsilva.smartgraph.graph.Digraph;
 import com.brunomnsilva.smartgraph.graph.Edge;
 import com.brunomnsilva.smartgraph.graph.Graph;
+import com.brunomnsilva.smartgraph.graph.InvalidVertexException;
 import com.brunomnsilva.smartgraph.graph.Vertex;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
@@ -925,7 +926,13 @@ public class SmartGraphPanel<V, E> extends Pane {
 
             for (Vertex<V> vertex : unplottedVertices) {
 
-                SmartGraphVertexNode<V> newVertex = spawnVertex(vertex);
+                SmartGraphVertexNode<V> newVertex;
+                try {
+                    newVertex = spawnVertex(vertex);
+                } catch (InvalidVertexException e) {
+                    /* The model changed while it was being read; update() will reconcile it. */
+                    continue;
+                }
 
                 //track new nodes
                 newVertices.add(newVertex);
