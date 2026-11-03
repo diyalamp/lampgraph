@@ -27,6 +27,14 @@ through a [force-directed algorithm](https://en.wikipedia.org/wiki/Force-directe
 
 ### What's new?
 
+- (2.6.1) Removed-element correctness:
+    - Operations now reject vertices and edges that were removed from the graph, including edges
+      removed implicitly with a vertex. Previously a stale edge could be re-inserted by
+      `replace(Edge, ...)`.
+    - Fixed the exception type thrown for edges from another graph implementation.
+    - The panel skips vertices that disappear while an update is reading the model.
+    - Unit test suite extended to 63 tests.
+
 - (2.6.0) Graph implementation hardening:
     - `GraphEdgeList` and `DigraphEdgeList` are now thread-safe for individual operations; sequences
       are not atomic, so synchronize on the graph instance if you need to group mutations.
@@ -37,28 +45,6 @@ through a [force-directed algorithm](https://en.wikipedia.org/wiki/Force-directe
     - Faster panel initialization: edges are placed in a single pass, with multiplicity indexes
       tracked locally.
     - Added a JUnit 5 test suite for both implementations. No public API changes.
-
-- (2.5.0) Interaction events:
-    - New event-based click API for vertices, edges and the canvas:
-      `setVertexClickHandler`, `setEdgeClickHandler` and `setCanvasClickHandler`.
-    - `SmartGraphClickEvent` exposes the clicked element, mouse button, click count, modifiers
-      and the click position in panel coordinates.
-    - Clicks on vertex labels, edge labels and arrows are routed to their owning graph element.
-    - Hover effects now propagate in both directions between graph elements and their labels/arrows.
-    - Panels initialize automatically once attached to a scene with a non-zero size; `init()` is
-      optional and idempotent.
-    - Performance improvements in automatic layout and updates: unordered allocation-free force
-      calculations, coalesced updates, cached annotation lookups and set-based removal detection.
-    - Deprecated `setVertexDoubleClickAction` and `setEdgeDoubleClickAction`; use
-      `setVertexClickHandler` / `setEdgeClickHandler` and `SmartGraphClickEvent#isDoubleClick()`.
-      These deprecated methods are scheduled for removal in 3.0.0.
-
-- (2.4.0) Notable changes:
-
-    - Fix a latent scroll bug in `ContentZoomScrollPane` under certain scroll events sequences.
-    - ⚠️JavaFX is now an `optional` dependency: your application must provide and declare the JavaFX modules it uses. smartgraph no longer forces a JavaFX version on consumers;
-      - Minimum runtime is now documented as JDK 17, since JavaFX 21 requires it; the library is compiled against JavaFX 21 (LTS);
-      - Added a `javafx.version` Maven property and aligned the build with the actual JavaFX/JDK requirements.
 
 See the [CHANGELOG.md](CHANGELOG.md) for the complete changelist.
 
@@ -119,7 +105,7 @@ Use `--enable-native-access=ALL-UNNAMED` instead if JavaFX is on the classpath r
 
 #### Maven
 
-Example for Maven, where `x.y.z` is the library version, e.g., `2.6.0`:
+Example for Maven, where `x.y.z` is the library version, e.g., `2.6.1`:
 
 ```xml
 <properties>

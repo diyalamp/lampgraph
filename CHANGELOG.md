@@ -1,5 +1,18 @@
 ## Changelog
 
+- (2.6.1) Removed-element correctness:
+    - Fixed stale vertex and edge handles still being accepted after removal. `GraphEdgeList` and
+      `DigraphEdgeList` now track removal explicitly and reject removed elements in every operation
+      that requires membership, with a distinct error message from foreign elements.
+    - Edges removed implicitly with a vertex are invalidated too. Previously such an edge could be
+      passed to `replace(Edge, ...)`, which re-inserted it into the graph.
+    - Fixed `checkEdge` throwing `InvalidVertexException` instead of `InvalidEdgeException` for
+      edges from another graph implementation.
+    - `SmartGraphPanel` now skips vertices that disappear while a model snapshot is being processed,
+      instead of failing on the JavaFX Application Thread.
+    - Added unit tests for removed and cross-implementation elements; the suite is now 63 tests.
+      This is a behavioral fix: code that used removed handles must stop doing so.
+
 - (2.6.0) Graph implementation hardening:
     - `GraphEdgeList` and `DigraphEdgeList` are now thread-safe for individual operations: every
       mutation and query synchronizes on the graph instance. Sequences of operations are not atomic;
