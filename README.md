@@ -1,3 +1,9 @@
+<div align="center">
+  <img src="https://raw.githubusercontent.com/diyalamp/diyalamp/163d76ca0501a0005a279a49227d61d00492b810/desktop/src/main/resources/app-icon.png" alt="DiyaLamp logo" width="80" height="80">
+  <h1>Lamp Graph</h1>
+  <p>Lamp Graph will be optimized for use in DiyaLamp.</p>
+</div>
+
 # (JavaFX) SmartGraph
 
 This project provides a generic (Java FX) **graph visualization library** that can automatically arrange the vertices' locations
